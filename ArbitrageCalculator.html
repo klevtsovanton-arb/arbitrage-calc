@@ -100,6 +100,11 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
         <div class="row"><label>Курс USD/RUB</label><input id="inRub" oninput="calc()" onchange="calc()" type="number" step="0.01" value="77"><div class="unit">₽/$</div></div>
         <div class="row"><label>Дней до экспирации</label><input id="inDays" oninput="calc()" onchange="calc()" type="number" step="1" value="68"><div class="unit">дн</div></div>
         <div class="row"><label>IV (implied vol)</label><input id="inIV" oninput="calc()" onchange="calc()" type="number" step="0.1" value="7.51"><div class="unit">%</div></div>
+        <div class="sep"></div>
+        <button onclick="fetchPrices()" id="btnFetch" style="width:100%;padding:10px;border-radius:8px;border:2px solid var(--cyan);background:rgba(0,180,216,.1);color:var(--cyan);font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:4px">🔄 ОБНОВИТЬ ЦЕНЫ</button>
+        <div id="fetchStatus" style="font-size:10px;color:var(--tm);text-align:center;min-height:14px"></div>
+        <div class="row" style="margin-top:4px"><label style="font-size:11px">TwelveData API key</label><input id="inApiKey" type="text" value="223e800e84a14bb19ff9fc738f3d0e4e" style="width:180px;font-size:11px;text-align:left" onchange="localStorage.setItem('td_key',this.value)"><div class="unit" style="width:10px"></div></div>
+        <div class="hint">Бесплатно: EUR/USD, USD/CNH, Gold. Для Silver/Platinum/Palladium — план Grow ($79/мес) на <a href="https://twelvedata.com/pricing" target="_blank" style="color:var(--cyan)">twelvedata.com</a></div>
       </div>
       <div class="card">
         <div class="card-t" style="color:var(--green)">💰 Капитал и плечо</div>
@@ -728,6 +733,64 @@ $('inLots').addEventListener('touchmove',function(e){if(this._touch)calc();},{pa
 $('inLots').addEventListener('touchend',function(){this._touch=false;calc();});
 
 $('inDays').value=daysToExp(MODES[mode].exp);
+
+// === LIVE PRICES ===
+try{const k=localStorage.getItem('td_key');if(k)$('inApiKey').value=k;}catch(e){}
+
+async function fetchPrices(){
+  const btn=$('btnFetch');
+  btn.disabled=true;btn.style.opacity='.5';
+  $('fetchStatus').textContent='⏳ МОЕХ...';$('fetchStatus').style.color='var(--yellow)';
+  let mxOk=0,fxOk=0;
+
+  // MOEX ISS (free, no key)
+  try{
+    const tickers=Object.values(MODES).map(m=>m.moexTicker).join(',')+',SiM6';
+    const r=await fetch('https://iss.moex.com/iss/engines/futures/markets/forts/securities.json?iss.meta=off&iss.only=marketdata,securities&securities='+tickers);
+    const d=await r.json();
+    const mc=d.marketdata.columns,mr=d.marketdata.data;
+    const sc=d.securities.columns,sr=d.securities.data;
+    const ci=n=>mc.indexOf(n),si=n=>sc.indexOf(n);
+    const mx={};
+    for(const row of mr){const id=row[ci('SECID')],last=row[ci('LAST')]||row[ci('SETTLEPRICE')];if(id&&last)mx[id]={price:last};}
+    for(const row of sr){const id=row[si('SECID')],im=row[si('INITIALMARGIN')];if(id&&im&&mx[id])mx[id].go=im;}
+    // Apply
+    for(const[k,v] of Object.entries(MODES)){
+      if(mx[v.moexTicker]){v.fut=mx[v.moexTicker].price;if(mx[v.moexTicker].go)v.go=Math.round(mx[v.moexTicker].go);}
+    }
+    const p=MODES[mode];
+    if(mx[p.moexTicker]){$('inFut').value=mx[p.moexTicker].price;if(mx[p.moexTicker].go)$('inGO').value=Math.round(mx[p.moexTicker].go);}
+    if(mx['SiM6'])$('inRub').value=(mx['SiM6'].price/1000).toFixed(2);
+    mxOk=Object.keys(mx).length;
+    $('fetchStatus').textContent='✅ МОЕХ ('+mxOk+'). Forex...';$('fetchStatus').style.color='var(--green)';
+  }catch(e){$('fetchStatus').textContent='❌ МОЕХ: '+e.message;$('fetchStatus').style.color='var(--red)';}
+
+  // TwelveData
+  const apiKey=$('inApiKey').value.trim();
+  if(apiKey){
+    try{
+      const syms=Object.values(MODES).map(m=>m.fxSymbol).join(',');
+      const r=await fetch('https://api.twelvedata.com/price?symbol='+encodeURIComponent(syms)+'&apikey='+apiKey);
+      const d=await r.json();
+      if(d.code&&d.status==='error')throw new Error(d.message);
+      for(const[sym,val] of Object.entries(d)){
+        if(val&&val.price){
+          const pr=parseFloat(val.price);
+          for(const v of Object.values(MODES)){if(v.fxSymbol===sym)v.spot=pr;}
+          if(MODES[mode].fxSymbol===sym)$('inSpot').value=pr;
+          fxOk++;
+        }
+      }
+    }catch(e){$('fetchStatus').textContent=(mxOk?'✅ МОЕХ. ':'')+'❌ FX: '+e.message;$('fetchStatus').style.color='var(--orange)';}
+  }
+
+  const t=new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+  if(mxOk&&fxOk)$('fetchStatus').textContent='✅ Обновлено '+t+' (МОЕХ:'+mxOk+' FX:'+fxOk+')';
+  else if(mxOk&&!apiKey){$('fetchStatus').textContent='✅ МОЕХ ок ('+t+'). Вставь API ключ для Forex ↓';$('fetchStatus').style.color='var(--yellow)';}
+  btn.disabled=false;btn.style.opacity='1';
+  calc();
+}
+
 calc();
 </script>
 </body>
