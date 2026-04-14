@@ -235,6 +235,10 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
           <div class="card-t" style="color:var(--yellow)">📊 ГО и капитал МОЕХ</div>
           <div id="trCapUsage"></div>
         </div>
+        <div class="reb">
+          <div class="title" style="color:var(--orange)">⚖ РЕБАЛАНС (равный риск)</div>
+          <div id="trRebContent"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -326,7 +330,14 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
         <div class="pl-row"><span class="l">РЕПО</span><span class="v" id="plRepo" style="color:var(--red)">-$244</span></div>
         <div class="pl-row"><span class="l">Комиссии</span><span class="v" id="plComm" style="color:var(--red)">-$10</span></div>
         <div class="pl-row" id="plFxSpreadRow" style="display:none"><span class="l">Спред FX (bid/ask)</span><span class="v" id="plFxSpread" style="color:var(--red)">-$0</span></div>
-        <div class="net-row"><span class="l">НЕТТО</span><span class="v" id="plNet" style="color:var(--green)">+$1 007</span></div>
+        <div class="net-row"><span class="l">НЕТТО (лучший)</span><span class="v" id="plNet" style="color:var(--green)">+$1 007</span></div>
+      </div>
+      <div class="card">
+        <div class="card-t" style="color:var(--red)">💵 Худший P&L (всё на МОЕХ + пейаут)</div>
+        <div class="pl-row"><span class="l">Гросс</span><span class="v" id="plGrossW" style="color:var(--green)">+$1 120</span></div>
+        <div class="pl-row"><span class="l">Пейаут пропу</span><span class="v" id="plPayW" style="color:var(--red)">-$56</span></div>
+        <div class="pl-row"><span class="l">Свопы + РЕПО + Комм</span><span class="v" id="plCostsW" style="color:var(--red)">-$113</span></div>
+        <div class="net-row"><span class="l">НЕТТО (худший)</span><span class="v" id="plNetW" style="color:var(--green)">+$951</span></div>
       </div>
       <div class="card">
         <div class="roi-grid">
@@ -640,6 +651,16 @@ function calc(){
   $('plComm').textContent='-$'+fm(cm,0);
   if(fxSpreadCost>0){$('plFxSpreadRow').style.display='';$('plFxSpread').textContent='-$'+fm(fxSpreadCost,0);}else{$('plFxSpreadRow').style.display='none';}
   $('plNet').textContent=(net>=0?'+':'')+' $'+fm(net,0);$('plNet').style.color=net>=0?'var(--green)':'var(--red)';
+
+  // Worst P&L: all on MOEX + payout
+  const payW=gross>0?gross*(+$('inPayout').value/100):0;
+  const swCost=p.dir==='back'?swT:-Math.abs(swT);
+  const costsW=swCost-repoT-cm-fxSpreadCost;
+  const netW=gross+costsW-payW;
+  $('plGrossW').textContent='+$'+fm(gross,0);$('plGrossW').style.color='var(--green)';
+  $('plPayW').textContent='-$'+fm(payW,0);
+  $('plCostsW').textContent=(costsW>=0?'+':'')+' $'+fm(costsW,0);$('plCostsW').style.color=costsW>=0?'var(--green)':'var(--red)';
+  $('plNetW').textContent=(netW>=0?'+':'')+' $'+fm(netW,0);$('plNetW').style.color=netW>=0?'var(--green)':'var(--red)';
 
   $('rRoi').textContent=roi.toFixed(1)+'%';$('rRoi').style.color='var(--cyan)';
   $('rAnn').textContent='~'+(roi/days*365).toFixed(0)+'%';
@@ -1077,10 +1098,9 @@ function calcOvw(){
       const seSt=stopout*fxMarg;
       const mxGoT=siC*goSi+crC*goCr;
       if(mxGoT>pska)break;
-      // Simple split: equal buffer approach
-      const fxSens=notional;
-      const mxSens=notional*rub;
-      const fxCapT=totalUsd*mxSens*mxRisk/(fxSens+mxSens*mxRisk)+seSt*mxSens*mxRisk/(fxSens+mxSens*mxRisk);
+      // Equal buffer: (fxCap-se)/notional = mxOwn*mxRisk/(notional*rub)
+      // → fxCap = (totalUsd*mxRisk + seSt) / (1 + mxRisk)
+      const fxCapT=(totalUsd*mxRisk+seSt)/(1+mxRisk);
       const mxOwnT=(totalUsd-fxCapT)*rub;
       if(fxCapT<seSt+100||mxOwnT<10000)continue;
       if(mxGoT>mxOwnT*propLev)continue;
@@ -1122,8 +1142,8 @@ function calcOvw(){
       <td class="hl" style="color:var(--orange);font-size:15px;font-weight:900">Si/Cr/CNH</td>
       <td class="hl">${absSpread.toFixed(2)}%</td>
       <td style="color:${dirCT}">${dirTxtT}</td>
-      <td>${bSiC>0?bSiC+' Si / '+bFxLots+' FX':'—'}</td>
-      <td>${bSiC>0?fm(bCrC)+' CNY':'—'}</td>
+      <td>${bSiC>0?bFxLots:'—'}</td>
+      <td>${bSiC>0?fm(bSiC)+' Si + '+fm(bCrC)+' CNY':'—'}</td>
       <td>$${fm(bFxC)}</td>
       <td>${fm(Math.round(bMxC/1000))}К</td>
       <td class="hl" style="color:${sigCT}">${bSig>0?bSig.toFixed(2)+'σ':'—'}</td>
@@ -1279,11 +1299,37 @@ function calcTriple(){
     +'<div style="font-size:12px;color:var(--tl)">ГО CNY: <b style="color:var(--tw)">'+fm(Math.round(crC*goCr/1000))+'К₽</b> ('+fm(crC)+' контр.)</div>'
     +'<div style="font-size:12px;color:var(--tl)">ГО итого: <b style="color:var(--tw)">'+fm(Math.round(mxGoTotal/1000))+'К₽</b></div>'
     +'<div style="font-size:12px;color:var(--tl)">Заём: <b style="color:'+(bor>0?'var(--orange)':'var(--green)')+'">'+( bor>0?fm(Math.round(bor/1000))+'К₽':'нет')+'</b></div></div></div>';
+
+  // Rebalance
+  const optFx=(totCap*mxRisk+se)/(1+mxRisk);
+  const optMx=(totCap-optFx)*rub;
+  const diff=fxCap-optFx;
+  if(Math.abs(diff)>100){
+    const amt=Math.abs(diff);
+    const amtRub=Math.round(amt*rub);
+    const nFx=Math.round(optFx),nMx=Math.round(optMx);
+    const nFxBuf=(nFx-se)/notional*100;
+    const nMxBuf=nMx*mxRisk/(notional*rub/100);
+    const nSig=sigP>0?Math.min(nFxBuf,nMxBuf)/100/sigP:0;
+    const nSc=nSig>=1?'var(--green)':nSig>=.5?'var(--yellow)':'var(--red)';
+    const transferTxt=diff>0
+      ?'Перевести <b style="color:var(--yellow)">$'+fm(Math.round(amt))+'</b> с Forex → ₽ на МОЕХ'
+      :'Вывести <b style="color:var(--yellow)">'+fm(amtRub)+'₽</b> с МОЕХ → $'+fm(Math.round(amt))+' на Forex';
+    $('trRebContent').innerHTML=`<p>${transferTxt}</p>
+      <p>Forex: $${fm(nFx)} | МОЕХ: ${fm(Math.round(nMx/1000))}К₽</p>
+      <p>Оба буфера: <b style="color:var(--green)">${Math.min(nFxBuf,nMxBuf).toFixed(1)}%</b> = <b style="color:${nSc}">${nSig.toFixed(2)}σ</b></p>`;
+  } else {
+    $('trRebContent').innerHTML='<p style="color:var(--tm)">Ребаланс не требуется — буферы сбалансированы</p>';
+  }
 }
 
 document.querySelectorAll('input,select').forEach(el=>{
   if(el.id==='inLots') return; // slider handled separately
-  const h=()=>{autoLotMode=true;calc();};
+  const h=()=>{
+    if(mode==='OVW')calcOvw();
+    else if(mode==='TRIPLE')calcTriple();
+    else{autoLotMode=true;calc();}
+  };
   el.addEventListener('input',h);el.addEventListener('change',h);
 });
 
