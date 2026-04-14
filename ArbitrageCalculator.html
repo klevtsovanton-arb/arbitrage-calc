@@ -1053,6 +1053,7 @@ function calcOvw(){
     const goSi=+$('trGoSi').value||12311, goCr=+$('trGoCr').value||1106;
     const crPerSi=Math.round(fx);
     const goPerSi=goSi+crPerSi*goCr;
+    const pska=totalRub*propLev;
 
     let bSiC=0,bFxC=0,bMxC=0,bSig=0,bNet=0,bNetW=0,bRoi=0;
     for(let siC=1;siC<=5000;siC++){
@@ -1359,6 +1360,8 @@ async function fetchPrices(){
       const m=mx[v.moexTicker];
       if(m)details.push(v.moexTicker+':'+m.price);
     }
+    if(mx['SiM6'])details.push('SiM6:'+mx['SiM6'].price);
+    if(mx['CRM6'])details.push('CRM6:'+mx['CRM6'].price);
     setFetchUI('✅ МОЕХ ('+mxOk+'). Forex...','var(--green)',true);
   }catch(e){setFetchUI('❌ МОЕХ: '+e.message,'var(--red)',true);}
 
@@ -1389,13 +1392,15 @@ async function fetchPrices(){
   else if(mxOk&&!apiKey)setFetchUI('✅ МОЕХ ок ('+t+')','var(--green)',false);
   else setFetchUI('Готово ('+t+')','var(--tm)',false);
   console.log('Fetch details:',details.join(' | '));
-  // Sync overview capital with new rate
-  if(mode==='OVW'){
-    const rub=+$('inRub').value||77;
-    $('ovwUsd').value=Math.round(+$('ovwRub').value/rub);
-    $('ovwRate').textContent=rub.toFixed(2);
-    calcOvw();
-  }else if(mode==='TRIPLE'){calcTriple();}else{calc();}
+  // Sync rate everywhere
+  const rub=+$('inRub').value||77;
+  $('ovwUsd').value=Math.round(+$('ovwRub').value/rub);
+  $('ovwRate').textContent=rub.toFixed(2);
+  $('trRub').value=rub.toFixed(2);
+  // Recalc active tab
+  if(mode==='OVW')calcOvw();
+  else if(mode==='TRIPLE')calcTriple();
+  else calc();
 }
 
 // Init in overview mode
