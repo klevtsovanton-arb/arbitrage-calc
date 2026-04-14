@@ -919,6 +919,7 @@ function calcOvw(){
   const payoutPct=+$('ovwPay').value/100;
   const ovwDays=+$('ovwDays').value||65;
   $('ovwRate').textContent=rub.toFixed(2);
+  const totalUsd=totalRub/rub;
 
   const tb=$('ovwBody');tb.innerHTML='';
   const colMap={EURUSD:'var(--cyan)',UCNY:'#DE2910',GOLD:'var(--gold)',SILVER:'#C0C0C0',PLAT:'#E5E4E2',PALL:'#B87333'};
@@ -940,11 +941,19 @@ function calcOvw(){
     // For each lot count, find equal-buffer split, check σ≥1.2 and capital≤total
     let bestLots=0,bestFx=0,bestMx=0,bestSig=0,bestNet=0,bestNetW=0,bestRoi=0;
 
-    // Determine step and range
-    let step=p.pipValForeign||key==='EURUSD'||key==='UCNY'?0.1:0.01;
-    const maxTestLots=50;
+    // Dynamic max: from capital constraints
+    const margPerLot=p.pipValForeign?p.cSize/p.fxLev:p.cSize*spot/p.fxLev;
+    const maxFxLots=totalUsd/margPerLot*0.9; // can't use 100% on margin
+    const maxMxLots=totalRub*propLev/p.go/p.lpc;
+    let dynMax=Math.min(maxFxLots,maxMxLots);
+    dynMax=Math.max(1,Math.min(10000,dynMax));
 
-    for(let sl=step;sl<=maxTestLots;sl+=step){
+    // Adaptive step
+    let step;
+    if(dynMax<=5)step=0.01;else if(dynMax<=20)step=0.1;else if(dynMax<=100)step=0.5;
+    else if(dynMax<=500)step=1;else if(dynMax<=2000)step=5;else step=10;
+
+    for(let sl=step;sl<=dynMax;sl+=step){
       const cn=sl*p.lpc;
       const tpv=sl*pipVal;
       const marg=p.pipValForeign?sl*p.cSize/p.fxLev:sl*p.cSize*spot/p.fxLev;
@@ -955,7 +964,6 @@ function calcOvw(){
       const A=p.pipSz/(spot*tpv); // fx buffer sensitivity
       const B=mxRisk*p.stepSz/(fut*cn*stepPr); // mx buffer sensitivity
 
-      const totalUsd=totalRub/rub;
       // fxCap*(1 + A/(B*rub)) = totalUsd + A*se/(B*rub)
       const denom=1+A/(B*rub);
       const fxCap=(totalUsd+A*se/(B*rub))/denom;
@@ -1054,9 +1062,14 @@ function calcOvw(){
     const crPerSi=Math.round(fx);
     const goPerSi=goSi+crPerSi*goCr;
     const pska=totalRub*propLev;
+    const goPerSiUnit=goSi+crPerSi*goCr;
+    const maxSiC=Math.min(Math.floor(pska/goPerSiUnit),Math.floor(totalUsd*100)); // GO or FX limit
+    let triStep;
+    if(maxSiC<=20)triStep=1;else if(maxSiC<=100)triStep=5;else if(maxSiC<=500)triStep=10;
+    else if(maxSiC<=2000)triStep=50;else triStep=100;
 
     let bSiC=0,bFxC=0,bMxC=0,bSig=0,bNet=0,bNetW=0,bRoi=0;
-    for(let siC=1;siC<=5000;siC++){
+    for(let siC=triStep;siC<=maxSiC;siC+=triStep){
       const notional=siC*1000;
       const fxLots=siC/100;
       const crC=Math.round(fx*siC);
@@ -1064,7 +1077,6 @@ function calcOvw(){
       const seSt=stopout*fxMarg;
       const mxGoT=siC*goSi+crC*goCr;
       if(mxGoT>pska)break;
-      const totalUsd=totalRub/rub;
       // Simple split: equal buffer approach
       const fxSens=notional;
       const mxSens=notional*rub;
