@@ -1336,7 +1336,7 @@ async function fetchPrices(){
       if(m.stepPrice)v.stepPr=m.stepPrice;
     }
     // Update current tab UI
-    if(mode!=='OVW'){
+    if(mode!=='OVW'&&mode!=='TRIPLE'){
       const p=MODES[mode];
       const m=mx[p.moexTicker];
       if(m){
