@@ -77,7 +77,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 <div class="wrap">
   <div class="hdr">
     <div class="tabs">
-      <button class="tab on" id="tabEU" onclick="switchTo('EURUSD')" style="background:var(--cyan)">EUR/USD</button>
+      <button class="tab on" id="tabOvw" onclick="switchTo('OVW')" style="font-size:13px;background:var(--green)">📊 Обзор</button>
+      <button class="tab" id="tabEU" onclick="switchTo('EURUSD')">EUR/USD</button>
       <button class="tab" id="tabUCNY" onclick="switchTo('UCNY')">USD/CNH</button>
       <button class="tab" id="tabGold" onclick="switchTo('GOLD')">Gold</button>
       <button class="tab" id="tabSilver" onclick="switchTo('SILVER')">Silver</button>
@@ -90,6 +91,58 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     </div>
   </div>
 
+  <!-- OVERVIEW -->
+  <div id="ovwContent" style="display:">
+    <div class="card">
+      <div class="card-t" style="color:var(--green)">⚙ Настройки счёта</div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+        <span style="font-size:16px;font-weight:800;color:var(--tl)">₽</span>
+        <input id="ovwRub" type="number" step="100000" value="1000000" oninput="ovwSyncFromRub()" onchange="ovwSyncFromRub()" style="width:140px;background:var(--inp);border:1px solid var(--border);border-radius:6px;color:var(--tw);padding:10px;font-size:18px;font-weight:800;text-align:right;font-family:inherit">
+        <span style="font-size:16px;font-weight:800;color:var(--tm)">=</span>
+        <span style="font-size:16px;font-weight:800;color:var(--tl)">$</span>
+        <input id="ovwUsd" type="number" step="100" value="13000" oninput="ovwSyncFromUsd()" onchange="ovwSyncFromUsd()" style="width:120px;background:var(--inp);border:1px solid var(--border);border-radius:6px;color:var(--tw);padding:10px;font-size:18px;font-weight:800;text-align:right;font-family:inherit">
+        <span style="font-size:12px;color:var(--tm);white-space:nowrap">по <b id="ovwRate" style="color:var(--tw)">77.00</b></span>
+      </div>
+      <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
+        <span style="font-size:14px;font-weight:700;color:var(--tl)">Дней</span>
+        <input id="ovwDays" type="number" step="1" value="65" oninput="calcOvw()" onchange="calcOvw()" style="width:60px;background:var(--inp);border:1px solid var(--border);border-radius:6px;color:var(--tw);padding:8px;font-size:15px;font-weight:800;text-align:right;font-family:inherit">
+        <span style="width:12px"></span>
+        <span style="font-size:14px;font-weight:700;color:var(--tl)">Плечо</span>
+        <input id="ovwProp" type="number" step="0.5" value="5" oninput="calcOvw()" onchange="calcOvw()" style="width:55px;background:var(--inp);border:1px solid var(--border);border-radius:6px;color:var(--tw);padding:8px;font-size:15px;font-weight:800;text-align:right;font-family:inherit">
+        <span style="font-size:12px;color:var(--tm)">×</span>
+        <span style="width:12px"></span>
+        <span style="font-size:14px;font-weight:700;color:var(--tl)">Морж</span>
+        <input id="ovwRisk" type="number" step="5" value="50" oninput="calcOvw()" onchange="calcOvw()" style="width:55px;background:var(--inp);border:1px solid var(--border);border-radius:6px;color:var(--tw);padding:8px;font-size:15px;font-weight:800;text-align:right;font-family:inherit">
+        <span style="font-size:12px;color:var(--tm)">%</span>
+        <span style="width:12px"></span>
+        <span style="font-size:14px;font-weight:700;color:var(--tl)">Стоп-аут</span>
+        <input id="ovwStop" type="number" step="5" value="50" oninput="calcOvw()" onchange="calcOvw()" style="width:55px;background:var(--inp);border:1px solid var(--border);border-radius:6px;color:var(--tw);padding:8px;font-size:15px;font-weight:800;text-align:right;font-family:inherit">
+        <span style="font-size:12px;color:var(--tm)">%</span>
+        <span style="width:12px"></span>
+        <span style="font-size:14px;font-weight:700;color:var(--tl)">РЕПО</span>
+        <input id="ovwRepo" type="number" step="1" value="21" oninput="calcOvw()" onchange="calcOvw()" style="width:55px;background:var(--inp);border:1px solid var(--border);border-radius:6px;color:var(--tw);padding:8px;font-size:15px;font-weight:800;text-align:right;font-family:inherit">
+        <span style="font-size:12px;color:var(--tm)">%</span>
+        <span style="width:12px"></span>
+        <span style="font-size:14px;font-weight:700;color:var(--tl)">Пейаут</span>
+        <input id="ovwPay" type="number" step="1" value="5" oninput="calcOvw()" onchange="calcOvw()" style="width:55px;background:var(--inp);border:1px solid var(--border);border-radius:6px;color:var(--tw);padding:8px;font-size:15px;font-weight:800;text-align:right;font-family:inherit">
+        <span style="font-size:12px;color:var(--tm)">%</span>
+      </div>
+      <button onclick="fetchPrices()" id="btnFetchOvw" style="width:100%;padding:10px;border-radius:8px;border:2px solid var(--cyan);background:rgba(0,180,216,.1);color:var(--cyan);font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:4px">🔄 ОБНОВИТЬ ЦЕНЫ</button>
+      <div id="fetchStatusOvw" style="font-size:10px;color:var(--tm);text-align:center;min-height:14px"></div>
+    </div>
+    <div class="card" style="overflow-x:auto">
+      <div class="card-t" style="color:var(--cyan)">📊 Все инструменты — оптимальный капитал при <span style="text-transform:none">σ</span> ≥ 1.2</div>
+      <table class="sc-table" id="ovwTable"><thead><tr>
+        <th>Инструмент</th><th>Спред</th><th>Напр.</th><th>Лоты FX</th><th>Контр. МХ</th>
+        <th>Капитал FX</th><th>Капитал МХ</th><th>σ</th>
+        <th>Лучший NET</th><th>ROI</th><th>Год.</th>
+        <th>Худший NET</th><th>ROI</th><th>Год.</th>
+      </tr></thead><tbody id="ovwBody"></tbody></table>
+    </div>
+  </div>
+
+  <!-- MAIN INSTRUMENT VIEW -->
+  <div id="mainContent" style="display:none">
   <div class="grid">
     <!-- COL 1: Inputs -->
     <div>
@@ -224,6 +277,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     </tr></thead><tbody id="scBody4"></tbody></table>
   </div>
 
+  </div><!-- /mainContent -->
   <div class="footer">Грамотный Трейдинг | Апрель 2026 | Все расчёты — оценка при текущих параметрах</div>
 </div>
 
@@ -261,11 +315,26 @@ function daysToExp(expStr){
 }
 
 function switchTo(m){
-  savedLots[mode]=+$('inLots').value;
+  if(mode!=='OVW')savedLots[mode]=+$('inLots').value;
+  const allTabs=['tabOvw','tabEU','tabUCNY','tabGold','tabSilver','tabPlat','tabPall'];
+  allTabs.forEach(t=>{$(t).className='tab';$(t).style.background='';});
+  const colMap={EURUSD:'var(--cyan)',UCNY:'#DE2910',GOLD:'var(--gold)',SILVER:'#C0C0C0',PLAT:'#E5E4E2',PALL:'#B87333',OVW:'var(--green)'};
+
+  if(m==='OVW'){
+    mode='OVW';
+    $('tabOvw').className='tab on';$('tabOvw').style.background=colMap.OVW;
+    $('mainContent').style.display='none';
+    $('ovwContent').style.display='';
+    $('hdrTitle').textContent='Обзор всех инструментов';
+    $('hdrSub').textContent='Оптимальный сплит капитала | σ ≥ 1.2';
+    calcOvw();
+    return;
+  }
+
   mode=m;const p=MODES[m];
-  ['tabEU','tabUCNY','tabGold','tabSilver','tabPlat','tabPall'].forEach(t=>{$(t).className='tab';$(t).style.background='';});
+  $('ovwContent').style.display='none';
+  $('mainContent').style.display='';
   const tabMap={EURUSD:'tabEU',UCNY:'tabUCNY',GOLD:'tabGold',SILVER:'tabSilver',PLAT:'tabPlat',PALL:'tabPall'};
-  const colMap={EURUSD:'var(--cyan)',UCNY:'#DE2910',GOLD:'var(--gold)',SILVER:'#C0C0C0',PLAT:'#E5E4E2',PALL:'#B87333'};
   $(tabMap[m]).className='tab on';$(tabMap[m]).style.background=colMap[m];
   $('inSpot').value=p.spot;$('inFut').value=p.fut;$('inDays').value=daysToExp(p.exp);$('inIV').value=p.iv;
   $('inSwap').value=p.swap;$('inFxSpread').value=p.fxSpread;$('inFxLev').value=p.fxLev;
@@ -709,6 +778,153 @@ function calc(){
   buildTable('scBody4',(oz,sp,cv,mv)=>({fxPnl:-mv*oz*cv,mxPnl:(sp+mv)*oz*cv}));
 }
 
+// === OVERVIEW ===
+function ovwSyncFromRub(){
+  const rub=+$('inRub').value||77;
+  $('ovwUsd').value=Math.round(+$('ovwRub').value/rub);
+  $('ovwRate').textContent=rub.toFixed(2);
+  calcOvw();
+}
+function ovwSyncFromUsd(){
+  const rub=+$('inRub').value||77;
+  $('ovwRub').value=Math.round(+$('ovwUsd').value*rub);
+  $('ovwRate').textContent=rub.toFixed(2);
+  calcOvw();
+}
+
+function calcOvw(){
+  const totalRub=+$('ovwRub').value;
+  const rub=+$('inRub').value||77;
+  const propLev=+$('ovwProp').value;
+  const mxRisk=+$('ovwRisk').value/100;
+  const stopout=+$('ovwStop').value/100;
+  const repoAnn=+$('ovwRepo').value/100;
+  const payoutPct=+$('ovwPay').value/100;
+  const ovwDays=+$('ovwDays').value||65;
+  $('ovwRate').textContent=rub.toFixed(2);
+
+  const tb=$('ovwBody');tb.innerHTML='';
+  const colMap={EURUSD:'var(--cyan)',UCNY:'#DE2910',GOLD:'var(--gold)',SILVER:'#C0C0C0',PLAT:'#E5E4E2',PALL:'#B87333'};
+
+  for(const[key,p] of Object.entries(MODES)){
+    const days=ovwDays;
+    const spot=p.spot,fut=p.fut;
+    const pipVal=p.pipValForeign?p.pipVal/spot:p.pipVal;
+    const stepPr=p.pipValForeign?rub/spot:p.stepPr;
+    const sigP=p.iv/100*Math.sqrt(days/365);
+    const pnlConv=p.pipValForeign?1/spot:1;
+
+    // Spread
+    const spread=p.dir==='back'?spot-fut:fut-spot;
+    const spPct=(spread/spot*100);
+
+    // Find optimal lots + capital split
+    // For each lot count, find equal-buffer split, check σ≥1.2 and capital≤total
+    let bestLots=0,bestFx=0,bestMx=0,bestSig=0,bestNet=0,bestNetW=0,bestRoi=0;
+
+    // Determine step and range
+    let step=p.pipValForeign||key==='EURUSD'||key==='UCNY'?0.1:0.01;
+    const maxTestLots=50;
+
+    for(let sl=step;sl<=maxTestLots;sl+=step){
+      const cn=sl*p.lpc;
+      const tpv=sl*pipVal;
+      const marg=p.pipValForeign?sl*p.cSize/p.fxLev:sl*p.cSize*spot/p.fxLev;
+      const se=stopout*marg;
+
+      // Equal-buffer formula: find fxCap given total capital
+      // A*(fxCap-se) = B*mxOwn, fxCap+mxOwn/rub = T$
+      const A=p.pipSz/(spot*tpv); // fx buffer sensitivity
+      const B=mxRisk*p.stepSz/(fut*cn*stepPr); // mx buffer sensitivity
+
+      const totalUsd=totalRub/rub;
+      // fxCap*(1 + A/(B*rub)) = totalUsd + A*se/(B*rub)
+      const denom=1+A/(B*rub);
+      const fxCap=(totalUsd+A*se/(B*rub))/denom;
+      const mxOwn=(totalUsd-fxCap)*rub;
+
+      if(fxCap<se+100||mxOwn<10000)continue; // not enough capital
+
+      // Check MOEX prop capital constraint
+      const pska=mxOwn*propLev;
+      const goT=cn*p.go;
+      if(goT>pska)continue; // can't cover GO
+
+      // Calculate sigma
+      const fxB=fxCap-se;
+      const fxPips=fxB/tpv;
+      const fxPctB=fxPips*p.pipSz/spot*100;
+      const mxBR=mxOwn*mxRisk;
+      const mxSV=cn*stepPr;
+      const mxPips=mxBR/mxSV;
+      const mxPctB=mxPips*p.stepSz/fut*100;
+      const minPct=Math.min(fxPctB,mxPctB);
+      const sig=sigP>0?minPct/100/sigP:0;
+
+      if(sig<1.2)break; // sigma drops below target, stop
+
+      // P&L: Best scenario (all on FX)
+      const spPips=Math.round(spread/p.pipSz);
+      const grossBest=p.dir==='back'?spPips*tpv:spread*sl*p.cSize;
+      const grossBestUsd=p.pipValForeign&&p.dir!=='back'?grossBest/spot:grossBest;
+      const swT=p.swap*pipVal*sl*days;
+      const bor=Math.max(0,goT-mxOwn);
+      const repoT=bor*repoAnn/365*days/rub;
+      const cm=sl*p.comm;
+      const fxSC=p.pipValForeign?p.fxSpread*sl*p.cSize/spot:p.fxSpread*sl*p.cSize;
+      const swCost=p.dir==='back'?swT:-Math.abs(swT);
+      const netBest=grossBestUsd+swCost-repoT-cm-fxSC;
+
+      // P&L: Worst scenario (drawdown + payout)
+      const totalOz=sl*p.cSize;
+      const moveOz=0.8*fxB/totalOz;
+      const fxLossW=-moveOz*totalOz*pnlConv;
+      const mxProfitW=(spread+moveOz)*totalOz*pnlConv;
+      const payW=mxProfitW>0?mxProfitW*payoutPct:0;
+      const netWorst=fxLossW+mxProfitW+swCost-repoT-cm-fxSC-payW;
+
+      const totCap=fxCap+mxOwn/rub;
+      const roi=netBest/totCap*100;
+
+      bestLots=sl;bestFx=Math.round(fxCap);bestMx=Math.round(mxOwn);
+      bestSig=sig;bestNet=netBest;bestNetW=netWorst;bestRoi=roi;
+    }
+
+    // Build row
+    const totCap=bestFx+bestMx/rub;
+    const dys=ovwDays;
+    const annB=dys>0?bestRoi/dys*365:0;
+    const roiW=totCap>0?bestNetW/totCap*100:0;
+    const annW=dys>0?roiW/dys*365:0;
+    const sigC=bestSig>=2?'var(--green)':bestSig>=1.2?'var(--yellow)':bestSig>=0.5?'var(--orange)':'var(--red)';
+    const netC=bestNet>=0?'var(--green)':'var(--red)';
+    const netWC=bestNetW>=0?'var(--green)':'var(--red)';
+    const dirTxt=p.dir==='back'?'бэкв.':'конт.';
+    const dirC=p.dir==='back'?'var(--green)':'var(--yellow)';
+    const lotsStr=bestLots>0?(Math.round(bestLots*100)/100).toFixed(2):'—';
+
+    const tr=document.createElement('tr');
+    tr.style.cursor='pointer';
+    tr.onclick=()=>switchTo(key);
+    tr.innerHTML=`
+      <td class="hl" style="color:${colMap[key]};font-size:15px;font-weight:900">${p.label}</td>
+      <td class="hl">${Math.abs(spPct).toFixed(2)}%</td>
+      <td style="color:${dirC}">${dirTxt}</td>
+      <td>${lotsStr}</td>
+      <td>${bestLots>0?fm(Math.round(bestLots*100)/100*p.lpc):'—'}</td>
+      <td>$${fm(bestFx)}</td>
+      <td>${fm(Math.round(bestMx/1000))}К</td>
+      <td class="hl" style="color:${sigC}">${bestSig>0?bestSig.toFixed(2)+'σ':'—'}</td>
+      <td class="hl" style="color:${netC}">${bestLots>0?'$'+fm(Math.round(bestNet)):'—'}</td>
+      <td style="color:${netC}">${bestLots>0?bestRoi.toFixed(1)+'%':'—'}</td>
+      <td style="color:${netC}">${bestLots>0?'~'+annB.toFixed(0)+'%':'—'}</td>
+      <td class="hl" style="color:${netWC}">${bestLots>0?'$'+fm(Math.round(bestNetW)):'—'}</td>
+      <td style="color:${netWC}">${bestLots>0?roiW.toFixed(1)+'%':'—'}</td>
+      <td style="color:${netWC}">${bestLots>0?'~'+annW.toFixed(0)+'%':'—'}</td>`;
+    tb.appendChild(tr);
+  }
+}
+
 document.querySelectorAll('input,select').forEach(el=>{
   if(el.id==='inLots') return; // slider handled separately
   const h=()=>{autoLotMode=true;calc();};
@@ -737,10 +953,13 @@ $('inDays').value=daysToExp(MODES[mode].exp);
 // === LIVE PRICES ===
 try{const k=localStorage.getItem('td_key');if(k)$('inApiKey').value=k;}catch(e){}
 
+function setFetchUI(msg,color,disabled){
+  ['btnFetch','btnFetchOvw'].forEach(id=>{const b=$(id);if(b){b.disabled=disabled;b.style.opacity=disabled?'.5':'1';}});
+  ['fetchStatus','fetchStatusOvw'].forEach(id=>{const s=$(id);if(s){s.textContent=msg;s.style.color=color;}});
+}
+
 async function fetchPrices(){
-  const btn=$('btnFetch');
-  btn.disabled=true;btn.style.opacity='.5';
-  $('fetchStatus').textContent='⏳ МОЕХ...';$('fetchStatus').style.color='var(--yellow)';
+  setFetchUI('⏳ МОЕХ...','var(--yellow)',true);
   let mxOk=0,fxOk=0,details=[];
 
   // MOEX ISS (free, no key)
@@ -773,21 +992,26 @@ async function fetchPrices(){
       if(m.stepPrice)v.stepPr=m.stepPrice;
     }
     // Update current tab UI
-    const p=MODES[mode];
-    const m=mx[p.moexTicker];
-    if(m){
-      $('inFut').value=m.price;
-      if(m.go)$('inGO').value=Math.round(m.go);
+    if(mode!=='OVW'){
+      const p=MODES[mode];
+      const m=mx[p.moexTicker];
+      if(m){
+        $('inFut').value=m.price;
+        if(m.go)$('inGO').value=Math.round(m.go);
+      }
     }
-    if(mx['SiM6'])$('inRub').value=(mx['SiM6'].price/1000).toFixed(2);
+    if(mx['SiM6']){
+      const spotRub=mx['SiM6'].price/1000*0.99; // Si фьюч → спот ≈ −1%
+      $('inRub').value=spotRub.toFixed(2);
+    }
     mxOk=Object.keys(mx).length;
     // Build details
     for(const[k,v] of Object.entries(MODES)){
       const m=mx[v.moexTicker];
       if(m)details.push(v.moexTicker+':'+m.price);
     }
-    $('fetchStatus').textContent='✅ МОЕХ ('+mxOk+'). Forex...';$('fetchStatus').style.color='var(--green)';
-  }catch(e){$('fetchStatus').textContent='❌ МОЕХ: '+e.message;$('fetchStatus').style.color='var(--red)';}
+    setFetchUI('✅ МОЕХ ('+mxOk+'). Forex...','var(--green)',true);
+  }catch(e){setFetchUI('❌ МОЕХ: '+e.message,'var(--red)',true);}
 
   // TwelveData (all symbols)
   const apiKey=$('inApiKey').value.trim();
@@ -801,24 +1025,38 @@ async function fetchPrices(){
         if(val&&val.price){
           const pr=parseFloat(val.price);
           for(const v of Object.values(MODES)){if(v.fxSymbol===sym)v.spot=pr;}
-          if(MODES[mode].fxSymbol===sym)$('inSpot').value=pr;
+          if(mode!=='OVW'&&MODES[mode].fxSymbol===sym)$('inSpot').value=pr;
           fxOk++;
         }
         if(val&&val.code)details.push(sym+':⚠'+val.message?.slice(0,20));
       }
-    }catch(e){$('fetchStatus').textContent=(mxOk?'✅ МОЕХ. ':'')+'❌ FX: '+e.message;$('fetchStatus').style.color='var(--orange)';}
+    }catch(e){setFetchUI((mxOk?'✅ МОЕХ. ':'')+'❌ FX: '+e.message,'var(--orange)',true);}
   }
 
   const t=new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  if(mxOk&&fxOk)$('fetchStatus').textContent='✅ '+t+' | МОЕХ:'+mxOk+' FX:'+fxOk+'/6';
-  else if(mxOk&&fxOk===0&&apiKey)$('fetchStatus').textContent='✅ МОЕХ ок. ⚠ FX: 0 пар ('+t+')';
-  else if(mxOk&&!apiKey){$('fetchStatus').textContent='✅ МОЕХ ок ('+t+'). Вставь API ключ ↓';$('fetchStatus').style.color='var(--yellow)';}
+  if(mxOk&&fxOk)setFetchUI('✅ '+t+' | МОЕХ:'+mxOk+' FX:'+fxOk+'/6','var(--green)',false);
+  else if(mxOk&&fxOk===0&&apiKey)setFetchUI('✅ МОЕХ ок. ⚠ FX: 0 пар ('+t+')','var(--orange)',false);
+  else if(mxOk&&!apiKey)setFetchUI('✅ МОЕХ ок ('+t+')','var(--green)',false);
+  else setFetchUI('Готово ('+t+')','var(--tm)',false);
   console.log('Fetch details:',details.join(' | '));
-  btn.disabled=false;btn.style.opacity='1';
-  calc();
+  // Sync overview capital with new rate
+  if(mode==='OVW'){
+    const rub=+$('inRub').value||77;
+    $('ovwUsd').value=Math.round(+$('ovwRub').value/rub);
+    $('ovwRate').textContent=rub.toFixed(2);
+    calcOvw();
+  }else calc();
 }
 
-calc();
+// Init in overview mode
+mode='OVW';
+$('hdrTitle').textContent='Обзор всех инструментов';
+$('hdrSub').textContent='Оптимальный сплит капитала | σ ≥ 1.2';
+$('inDays').value=daysToExp(MODES.EURUSD.exp);
+$('ovwDays').value=daysToExp(MODES.EURUSD.exp);
+calcOvw();
+// Auto-fetch on load
+fetchPrices();
 </script>
 </body>
 </html>
