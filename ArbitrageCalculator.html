@@ -368,7 +368,6 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
         <button onclick="fetchPrices()" id="btnFetch" style="width:100%;padding:10px;border-radius:8px;border:2px solid var(--cyan);background:rgba(0,180,216,.1);color:var(--cyan);font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:4px">🔄 ОБНОВИТЬ ЦЕНЫ</button>
         <div id="fetchStatus" style="font-size:10px;color:var(--tm);text-align:center;min-height:14px"></div>
         <div class="row" style="margin-top:4px;display:none"><label style="font-size:11px">TwelveData API key</label><input id="inApiKey" type="password" value="223e800e84a14bb19ff9fc738f3d0e4e" style="width:180px;font-size:11px;text-align:left" onchange="localStorage.setItem('td_key',this.value)"><div class="unit" style="width:10px"></div></div>
-        <div style="display:none"><input id="inMxToken" type="hidden" value="eyJhbGciOiJIUzUxMiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICI4NWI4ZWE3YS0yMGE4LTRmOGMtOGZjMy1jMjAyOWViMGMzYWUifQ.eyJleHAiOjE4MDc3NzIzOTcsImlhdCI6MTc3NjIzNjM5NywianRpIjoiMTQyY2YxYWUtZTQ0Yy00ZTc4LWJmYWUtOGQwNjY1YzNiNDQ0IiwiaXNzIjoiaHR0cHM6Ly9zc28yLm1vZXguY29tL2F1dGgvcmVhbG1zL1NTTyIsImF1ZCI6Imh0dHBzOi8vc3NvMi5tb2V4LmNvbS9hdXRoL3JlYWxtcy9TU08iLCJzdWIiOiJmOmIzOTRhMjgyLTc5MmEtNDZiNy05OWJhLWI0YWYxODQ0YWEyNToxMjAyNzE3IiwidHlwIjoiT2ZmbGluZSIsImF6cCI6ImRwbGF0Zm9ybS1hcGkiLCJzaWQiOiJjNzg4MTUwMy1kMTBmLTQwYzQtOTg4MS1hMDk5YWY1MDA0ODgiLCJzY29wZSI6Im9wZW5pZCBvZmZsaW5lX2FjY2VzcyBwcm9maWxlIGJhc2ljIHdlYi1vcmlnaW5zIGVtYWlsIHJvbGVzIGJhY2t3YXJkc19jb21wYXRpYmxlIGFjciB3ZWJfbGsifQ.Fn0Fkx1ExumHhX6Jbbky3XkAY6K3UfNqOjJRP6y2RBBVX2MfmJVi3R5rxSGVPg4O6wF0T3k4vG54T5S5pmrnqQ"></div>
         <div class="hint" style="display:none">Бесплатно: EUR/USD, USD/CNH, Gold. Для Silver/Platinum/Palladium — план Grow ($79/мес) на <a href="https://twelvedata.com/pricing" target="_blank" style="color:var(--cyan)">twelvedata.com</a></div>
       </div>
       <div class="card">
@@ -1820,9 +1819,7 @@ async function fetchPrices(){
   // MOEX ISS (free, no key)
   try{
     const tickers=Object.values(MODES).map(m=>m.moexTicker).join(',')+',SiM6,CRM6,EuM6';
-    const mxToken=$('inMxToken').value.trim();
-    const authParam=mxToken?'&auth_token='+mxToken:'';
-    const r=await fetch('https://iss.moex.com/iss/engines/futures/markets/forts/securities.json?iss.meta=off&iss.only=marketdata,securities&securities='+tickers+authParam);
+    const r=await fetch('https://iss.moex.com/iss/engines/futures/markets/forts/securities.json?iss.meta=off&iss.only=marketdata,securities&securities='+tickers);
     const d=await r.json();
     const mc=d.marketdata.columns,mr=d.marketdata.data;
     const sc=d.securities.columns,sr=d.securities.data;
