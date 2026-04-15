@@ -18,7 +18,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .hdr-right p{font-size:12px;color:var(--tm)}
 .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 @media(max-width:900px){.grid{grid-template-columns:1fr}
-#scenConv{grid-template-columns:1fr !important}}
+#scenConv{grid-template-columns:1fr !important}
+#trScenConv{grid-template-columns:1fr !important}
+#teScenConv{grid-template-columns:1fr !important}}
 .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;box-shadow:0 4px 12px rgba(0,0,0,.3)}
 .card-t{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
 .row{display:flex;align-items:center;gap:6px;margin-bottom:6px}
@@ -81,6 +83,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
       <button class="tab" id="tabEU" onclick="switchTo('EURUSD')">EUR/USD</button>
       <button class="tab" id="tabUCNY" onclick="switchTo('UCNY')">USD/CNH</button>
       <button class="tab" id="tabTriple" onclick="switchTo('TRIPLE')" style="font-size:12px">Si/Cr/CNH</button>
+      <button class="tab" id="tabTripleEu" onclick="switchTo('TRIPLE_EU')" style="font-size:12px">Eu/Cr/EURCNH</button>
       <button class="tab" id="tabGold" onclick="switchTo('GOLD')">Gold</button>
       <button class="tab" id="tabSilver" onclick="switchTo('SILVER')">Silver</button>
       <button class="tab" id="tabPlat" onclick="switchTo('PLAT')">Platinum</button>
@@ -231,19 +234,125 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
             <div><div class="lbl">Капитал</div><div class="val" id="trCap" style="color:var(--tl)">$26K</div></div>
           </div>
         </div>
-        <div class="card">
-          <div class="card-t" style="color:var(--yellow)">📊 ГО и капитал МОЕХ</div>
-          <div id="trCapUsage"></div>
-        </div>
-        <div class="reb">
+        <div class="reb" style="margin-top:10px">
           <div class="title" style="color:var(--orange)">⚖ РЕБАЛАНС (равный риск)</div>
           <div id="trRebContent"></div>
         </div>
+        <div class="card" style="margin-top:10px">
+          <div class="card-t" style="color:var(--yellow)">📊 Задействованный капитал</div>
+          <div id="trCapUsage"></div>
+        </div>
       </div>
+    </div>
+    <div class="card" style="margin-top:10px">
+      <div class="card-t" style="color:var(--orange)">🎯 Четыре сценария схождения</div>
+      <div id="trScenConv" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px"></div>
     </div>
   </div>
 
-  <!-- MAIN INSTRUMENT VIEW -->
+  <!-- TRIPLE EU: Eu/CNY/EURCNH -->
+  <div id="tripleEuContent" style="display:none">
+    <div class="grid">
+      <div>
+        <div class="card">
+          <div class="card-t" style="color:#E5C100">📊 Цены трёх ног (евровый)</div>
+          <div class="row"><label>Eu-6.26 (₽/1000€)</label><input id="teEu" type="number" step="1" value="88982" oninput="calcTripleEu()" onchange="calcTripleEu()"><div class="unit">₽</div></div>
+          <div class="row"><label>CNY-6.26 (₽/юань)</label><input id="teCr" type="number" step="0.001" value="11.212" oninput="calcTripleEu()" onchange="calcTripleEu()"><div class="unit">₽</div></div>
+          <div class="row"><label>EUR/CNH (Forex)</label><input id="teFx" type="number" step="0.001" value="8.0325" oninput="calcTripleEu()" onchange="calcTripleEu()"><div class="unit"></div></div>
+          <div class="row"><label>Курс USD/RUB</label><input id="teRub" type="number" step="0.01" value="77" oninput="calcTripleEu()" onchange="calcTripleEu()"><div class="unit">₽/$</div></div>
+          <div class="row"><label>Дней в позиции</label><input id="teDays" type="number" step="1" value="65" oninput="calcTripleEu()" onchange="calcTripleEu()"><div class="unit">дн</div></div>
+          <div class="row"><label>IV спреда</label><input id="teIV" type="number" step="0.5" value="5" oninput="calcTripleEu()" onchange="calcTripleEu()"><div class="unit">%</div></div>
+          <div class="sep"></div>
+          <button onclick="fetchPrices()" id="btnFetchTripleEu" style="width:100%;padding:10px;border-radius:8px;border:2px solid var(--cyan);background:rgba(0,180,216,.1);color:var(--cyan);font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:4px">🔄 ОБНОВИТЬ ЦЕНЫ</button>
+          <div id="fetchStatusTripleEu" style="font-size:10px;color:var(--tm);text-align:center;min-height:14px"></div>
+        </div>
+        <div class="card">
+          <div class="card-t" style="color:var(--green)">💰 Капитал</div>
+          <div class="row"><label>Forex (свои)</label><input id="teFxCap" type="number" step="100" value="13000" oninput="calcTripleEu()" onchange="calcTripleEu()"><div class="unit">$</div></div>
+          <div class="row"><label>Плечо Forex</label><input id="teFxLev" type="number" step="1" value="100" oninput="calcTripleEu()" onchange="calcTripleEu()"><div class="unit">:1</div></div>
+          <div class="row"><label>МОЕХ (свои)</label><input id="teMxOwn" type="number" step="100000" value="1000000" oninput="calcTripleEu()" onchange="calcTripleEu()"><div class="unit">₽</div></div>
+          <div class="row"><label>Плечо пропа</label><input id="tePropLev" type="number" step="0.5" value="5" oninput="calcTripleEu()" onchange="calcTripleEu()"><div class="unit">×</div></div>
+          <div class="row"><label>Морж МОЕХ</label><input id="teMxRisk" type="number" step="5" value="50" oninput="calcTripleEu()" onchange="calcTripleEu()"><div class="unit">%</div></div>
+          <div class="row"><label>ГО Eu</label><input id="teGoEu" type="number" step="100" value="14118" oninput="calcTripleEu()" onchange="calcTripleEu()"><div class="unit">₽</div></div>
+          <div class="row"><label>ГО CNY</label><input id="teGoCr" type="number" step="100" value="1072" oninput="calcTripleEu()" onchange="calcTripleEu()"><div class="unit">₽</div></div>
+          <div class="row"><label>Стоп-аут FX</label><input id="teStopout" type="number" step="5" value="50" oninput="calcTripleEu()" onchange="calcTripleEu()"><div class="unit">%</div></div>
+          <div class="sep"></div>
+          <div class="card-t" style="color:var(--red)">💸 Издержки</div>
+          <div class="row"><label>Своп EURCNH short</label><input id="teSwapS" type="number" step="0.001" value="-0.35" oninput="calcTripleEu()" onchange="calcTripleEu()"><div class="unit">пипс</div></div>
+          <div class="row"><label>Своп EURCNH long</label><input id="teSwapL" type="number" step="0.001" value="0.017" oninput="calcTripleEu()" onchange="calcTripleEu()"><div class="unit">пипс</div></div>
+          <div class="row"><label>РЕПО (год.)</label><input id="teRepo" type="number" step="1" value="21" oninput="calcTripleEu()" onchange="calcTripleEu()"><div class="unit">%</div></div>
+          <div class="row"><label>Пейаут</label><input id="tePayout" type="number" step="1" value="5" oninput="calcTripleEu()" onchange="calcTripleEu()"><div class="unit">%</div></div>
+          <div class="row"><label>Комиссия FX/лот</label><input id="teComm" type="number" step="1" value="5" oninput="calcTripleEu()" onchange="calcTripleEu()"><div class="unit">$</div></div>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <div class="big"><div class="num" id="teSpreadVal" style="color:#E5C100">−1.20%</div><div class="sub" id="teSpreadSub">Синтетика дешевле</div></div>
+          <div class="sep"></div>
+          <div class="row"><label style="font-size:13px">Ожидаемая раздвижка</label><input id="teExpSpread" type="number" step="0.01" value="" placeholder="авто" oninput="calcTripleEu()" onchange="calcTripleEu()" style="width:80px"><div class="unit">%</div></div>
+          <div class="hint">Пусто = считает из цен</div>
+        </div>
+        <div class="card">
+          <div class="card-t" style="color:var(--yellow)">📏 Размер позиции</div>
+          <div class="slider-val" id="teLotsDisp">10 Eu + 80 CNY + 0.10 FX</div>
+          <div class="slider-box"><div style="display:flex;align-items:center;gap:8px">
+            <button onclick="adjTripleEuLots(-1)" class="lot-btn">−</button>
+            <input id="teLots" type="range" min="1" max="250" step="1" value="10" oninput="calcTripleEu()" onchange="calcTripleEu()" style="flex:1">
+            <button onclick="adjTripleEuLots(1)" class="lot-btn">+</button>
+          </div></div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--tm)"><span id="teSlMin">1</span><span id="teSlMax">250</span></div>
+        </div>
+        <div class="card">
+          <div class="gauge"><div class="gauge-bar"><div class="gauge-fill" id="teGaugeF"></div></div>
+            <div class="gauge-marks"><span>0</span><span>1σ</span><span>2σ</span><span>3σ</span></div></div>
+          <div class="gauge-label"><span class="val" id="teGVal">1.20σ</span><br><span class="txt" id="teGTxt">УМЕРЕННО</span><br><span class="sub" id="teGSub">Шанс моржа: ~32%</span></div>
+        </div>
+        <div class="card">
+          <div class="buf-grid">
+            <div><div class="lbl">Forex буфер</div><div class="val" id="teBFx" style="color:var(--orange)">500 п.</div><div class="pct" id="teBFxP">5%</div></div>
+            <div><div class="lbl">МОЕХ буфер</div><div class="val" id="teBMx" style="color:var(--red)">300 п.</div><div class="pct" id="teBMxP">3%</div></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <div class="card-t" style="color:var(--green)">💵 P&L (лучший: всё на FX)</div>
+          <div class="pl-row"><span class="l">Гросс (раздвижка)</span><span class="v" id="tePlGross" style="color:var(--green)">+$600</span></div>
+          <div class="pl-row"><span class="l">Свопы FX</span><span class="v" id="tePlSwap" style="color:var(--red)">-$90</span></div>
+          <div class="pl-row"><span class="l">РЕПО</span><span class="v" id="tePlRepo" style="color:var(--red)">-$200</span></div>
+          <div class="pl-row"><span class="l">Комиссии</span><span class="v" id="tePlComm" style="color:var(--red)">-$5</span></div>
+          <div class="net-row"><span class="l">НЕТТО лучший</span><span class="v" id="tePlNet" style="color:var(--green)">+$305</span></div>
+        </div>
+        <div class="card">
+          <div class="card-t" style="color:var(--red)">💵 P&L (худший: всё на МОЕХ + пейаут)</div>
+          <div class="pl-row"><span class="l">Гросс</span><span class="v" id="tePlGrossW" style="color:var(--green)">+$600</span></div>
+          <div class="pl-row"><span class="l">Пейаут пропу</span><span class="v" id="tePlPayW" style="color:var(--red)">-$30</span></div>
+          <div class="pl-row"><span class="l">Свопы + РЕПО + Комм</span><span class="v" id="tePlCostsW" style="color:var(--red)">-$295</span></div>
+          <div class="net-row"><span class="l">НЕТТО худший</span><span class="v" id="tePlNetW" style="color:var(--green)">+$275</span></div>
+        </div>
+        <div class="card">
+          <div class="roi-grid">
+            <div><div class="lbl">ROI лучш.</div><div class="val" id="teRoiB" style="color:var(--cyan)">2.3%</div></div>
+            <div><div class="lbl">Годовых</div><div class="val" id="teAnnB" style="color:var(--cyan)">~13%</div></div>
+            <div><div class="lbl">Капитал</div><div class="val" id="teCap" style="color:var(--tl)">$26K</div></div>
+          </div>
+        </div>
+        <div class="reb" style="margin-top:10px">
+          <div class="title" style="color:#E5C100">⚖ РЕБАЛАНС (равный риск)</div>
+          <div id="teRebContent"></div>
+        </div>
+        <div class="card" style="margin-top:10px">
+          <div class="card-t" style="color:var(--yellow)">📊 Задействованный капитал</div>
+          <div id="teCapUsage"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:10px">
+      <div class="card-t" style="color:#E5C100">🎯 Четыре сценария схождения</div>
+      <div id="teScenConv" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px"></div>
+    </div>
+  </div>
+
   <div id="mainContent" style="display:none">
   <div class="grid">
     <!-- COL 1: Inputs -->
@@ -428,14 +537,14 @@ function daysToExp(expStr){
 
 function switchTo(m){
   if(mode!=='OVW')savedLots[mode]=+$('inLots').value;
-  const allTabs=['tabOvw','tabEU','tabUCNY','tabTriple','tabGold','tabSilver','tabPlat','tabPall'];
+  const allTabs=['tabOvw','tabEU','tabUCNY','tabTriple','tabTripleEu','tabGold','tabSilver','tabPlat','tabPall'];
   allTabs.forEach(t=>{$(t).className='tab';$(t).style.background='';});
   const colMap={EURUSD:'var(--cyan)',UCNY:'#DE2910',GOLD:'var(--gold)',SILVER:'#C0C0C0',PLAT:'#E5E4E2',PALL:'#B87333',OVW:'var(--green)'};
 
   if(m==='OVW'){
     mode='OVW';
     $('tabOvw').className='tab on';$('tabOvw').style.background=colMap.OVW;
-    $('mainContent').style.display='none';$('tripleContent').style.display='none';
+    $('mainContent').style.display='none';$('tripleContent').style.display='none';$('tripleEuContent').style.display='none';
     $('ovwContent').style.display='';
     $('hdrTitle').textContent='Обзор всех инструментов';
     $('hdrSub').textContent='Оптимальный сплит капитала | σ ≥ 1.2';
@@ -445,17 +554,28 @@ function switchTo(m){
   if(m==='TRIPLE'){
     mode='TRIPLE';
     $('tabTriple').className='tab on';$('tabTriple').style.background='var(--orange)';
-    $('ovwContent').style.display='none';$('mainContent').style.display='none';
+    $('ovwContent').style.display='none';$('mainContent').style.display='none';$('tripleEuContent').style.display='none';
     $('tripleContent').style.display='';
     $('hdrTitle').textContent='Тройной арбитраж Si/CNY/USDCNH';
     $('hdrSub').textContent='Si×CNY синтетика vs Forex USDCNH';
     calcTriple();
     return;
   }
+  if(m==='TRIPLE_EU'){
+    mode='TRIPLE_EU';
+    $('tabTripleEu').className='tab on';$('tabTripleEu').style.background='#E5C100';
+    $('ovwContent').style.display='none';$('mainContent').style.display='none';$('tripleContent').style.display='none';
+    $('tripleEuContent').style.display='';
+    $('hdrTitle').textContent='Евровый тройничок Eu/CNY/EURCNH';
+    $('hdrSub').textContent='Eu×CNY синтетика vs Forex EURCNH';
+    calcTripleEu();
+    return;
+  }
 
   mode=m;const p=MODES[m];
   $('ovwContent').style.display='none';
   $('tripleContent').style.display='none';
+  $('tripleEuContent').style.display='none';
   $('mainContent').style.display='';
   const tabMap={EURUSD:'tabEU',UCNY:'tabUCNY',GOLD:'tabGold',SILVER:'tabSilver',PLAT:'tabPlat',PALL:'tabPall'};
   $(tabMap[m]).className='tab on';$(tabMap[m]).style.background=colMap[m];
@@ -1156,6 +1276,89 @@ function calcOvw(){
     ovwRows.push({net:bNet,tr:trT});
   }
 
+  // EU Triple arb row
+  {
+    const euP=+$('teEu').value||88982, crP=+$('teCr').value||11.212, fxP=+$('teFx').value||8.0325;
+    const synth=euP/1000/crP;
+    const triSp=(synth-fxP)/fxP*100;
+    const absSp=Math.abs(triSp);
+    const isN=triSp<0;
+    const swPips=isN?(+$('teSwapS').value||-0.35):(+$('teSwapL').value||0.017);
+    const goEu=+$('teGoEu').value||14118, goCrE=+$('teGoCr').value||1072;
+    const crPerEu=Math.round(fxP);
+    const goPerEu=goEu+crPerEu*goCrE;
+    const pskaE=totalRub*propLev;
+    const eurusd=euP/1000/rub;
+    const maxEuC=Math.min(Math.floor(pskaE/goPerEu),Math.floor(totalUsd/(10*eurusd)));
+    let teStep;
+    if(maxEuC<=20)teStep=1;else if(maxEuC<=100)teStep=5;else if(maxEuC<=500)teStep=10;
+    else if(maxEuC<=2000)teStep=50;else teStep=100;
+
+    let bEuC=0,bFxE=0,bMxE=0,bSigE=0,bNetE=0,bNetWE=0,bRoiE=0;
+    for(let ec=teStep;ec<=maxEuC;ec+=teStep){
+      const notRub=ec*euP;
+      const notUsd=notRub/rub;
+      const fxLotsE=ec/100;
+      const crCE=Math.round(fxP*ec);
+      const fxMargE=notUsd/(+$('teFxLev').value||100);
+      const seE=stopout*fxMargE;
+      const mxGoE=ec*goEu+crCE*goCrE;
+      if(mxGoE>pskaE)break;
+      const fxCapE=(totalUsd*mxRisk+seE)/(1+mxRisk);
+      const mxOwnE=(totalUsd-fxCapE)*rub;
+      if(fxCapE<seE+100||mxOwnE<10000)continue;
+      if(mxGoE>mxOwnE*propLev)continue;
+      const fxBufE=(fxCapE-seE)/notUsd*100;
+      const mxBufE=mxOwnE*mxRisk/(notRub/100);
+      const minPE=Math.min(fxBufE,mxBufE);
+      const ivE=+$('teIV').value||5;
+      const sigPE=ivE/100*Math.sqrt(ovwDays/365);
+      const sigE=sigPE>0?minPE/100/sigPE:0;
+      if(sigE<1.2)break;
+      const grossE=absSp/100*notUsd;
+      const fxPipValE=10*crP/rub;
+      const swTE=swPips*fxPipValE*fxLotsE*ovwDays;
+      const borE=Math.max(0,mxGoE-mxOwnE);
+      const repoE=borE*repoAnn/365*ovwDays/rub;
+      const cmE=Math.max(1,Math.round(fxLotsE))*5;
+      const netE=grossE+swTE-repoE-cmE;
+      const payWE=grossE*payoutPct;
+      const netWE=netE-payWE;
+      const totCE=fxCapE+mxOwnE/rub;
+      bEuC=ec;bFxE=Math.round(fxCapE);bMxE=Math.round(mxOwnE);bSigE=sigE;bNetE=netE;bNetWE=netWE;bRoiE=netE/totCE*100;
+    }
+    const totCE=bFxE+bMxE/rub;
+    const annBE=ovwDays>0?bRoiE/ovwDays*365:0;
+    const roiWE=totCE>0?bNetWE/totCE*100:0;
+    const annWE=ovwDays>0?roiWE/ovwDays*365:0;
+    const sigCE=bSigE>=2?'var(--green)':bSigE>=1.2?'var(--yellow)':'var(--red)';
+    const netCE=bNetE>=0?'var(--green)':'var(--red)';
+    const netWCE=bNetWE>=0?'var(--green)':'var(--red)';
+    const dirTE=isN?'бэкв.':'конт.';
+    const dirCE=isN?'var(--green)':'var(--yellow)';
+    const bFxLotsE=(bEuC/100).toFixed(2);
+    const bCrCE=Math.round(fxP*bEuC);
+    const trTE=document.createElement('tr');
+    trTE.style.cursor='pointer';
+    trTE.onclick=()=>switchTo('TRIPLE_EU');
+    trTE.innerHTML=`
+      <td class="hl" style="color:#E5C100;font-size:15px;font-weight:900">Eu/Cr/EURCNH</td>
+      <td class="hl">${absSp.toFixed(2)}%</td>
+      <td style="color:${dirCE}">${dirTE}</td>
+      <td>${bEuC>0?bFxLotsE:'—'}</td>
+      <td>${bEuC>0?fm(bEuC)+' Eu + '+fm(bCrCE)+' CNY':'—'}</td>
+      <td>$${fm(bFxE)}</td>
+      <td>${fm(Math.round(bMxE/1000))}К</td>
+      <td class="hl" style="color:${sigCE}">${bSigE>0?bSigE.toFixed(2)+'σ':'—'}</td>
+      <td class="hl" style="color:${netCE}">${bEuC>0?'$'+fm(Math.round(bNetE)):'—'}</td>
+      <td style="color:${netCE}">${bEuC>0?bRoiE.toFixed(1)+'%':'—'}</td>
+      <td style="color:${netCE}">${bEuC>0?'~'+annBE.toFixed(0)+'%':'—'}</td>
+      <td class="hl" style="color:${netWCE}">${bEuC>0?'$'+fm(Math.round(bNetWE)):'—'}</td>
+      <td style="color:${netWCE}">${bEuC>0?roiWE.toFixed(1)+'%':'—'}</td>
+      <td style="color:${netWCE}">${bEuC>0?'~'+annWE.toFixed(0)+'%':'—'}</td>`;
+    ovwRows.push({net:bNetE,tr:trTE});
+  }
+
   // Sort by best net descending
   ovwRows.sort((a,b)=>b.net-a.net);
   for(const r of ovwRows) tb.appendChild(r.tr);
@@ -1290,6 +1493,10 @@ function calcTriple(){
 
   // Capital usage
   const freeFx=fxCap-fxMarg;
+  const swDaily=swapPips*(10/fx)*fxLots;
+  const repoN=bor*repoAnn/365;
+  const repoNusd=repoN/rub;
+  const swPctCap=Math.abs(swT)/totCap*100;
   $('trCapUsage').innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
     +'<div><div style="font-size:11px;color:var(--tl);margin-bottom:4px"><b style="color:var(--cyan)">FOREX</b></div>'
     +'<div style="font-size:12px;color:var(--tl)">Маржа: <b style="color:var(--tw)">$'+fm(fxMarg,0)+'</b> ('+fxLots.toFixed(2)+' лотов)</div>'
@@ -1298,7 +1505,14 @@ function calcTriple(){
     +'<div style="font-size:12px;color:var(--tl)">ГО Si: <b style="color:var(--tw)">'+fm(Math.round(siC*goSi/1000))+'К₽</b> ('+fm(siC)+' контр.)</div>'
     +'<div style="font-size:12px;color:var(--tl)">ГО CNY: <b style="color:var(--tw)">'+fm(Math.round(crC*goCr/1000))+'К₽</b> ('+fm(crC)+' контр.)</div>'
     +'<div style="font-size:12px;color:var(--tl)">ГО итого: <b style="color:var(--tw)">'+fm(Math.round(mxGoTotal/1000))+'К₽</b></div>'
-    +'<div style="font-size:12px;color:var(--tl)">Заём: <b style="color:'+(bor>0?'var(--orange)':'var(--green)')+'">'+( bor>0?fm(Math.round(bor/1000))+'К₽':'нет')+'</b></div></div></div>';
+    +'<div style="font-size:12px;color:var(--tl)">Заём: <b style="color:'+(bor>0?'var(--orange)':'var(--green)')+'">'+( bor>0?fm(Math.round(bor/1000))+'К₽':'нет')+'</b></div></div></div>'
+    +'<div style="border-top:1px solid var(--border);margin-top:8px;padding-top:8px">'
+    +'<div style="font-size:11px;color:var(--tl);margin-bottom:4px"><b style="color:var(--red)">ИЗДЕРЖКИ</b></div>'
+    +'<div style="font-size:12px;color:var(--tl)">Своп/ночь: <b style="color:'+(swDaily>=0?'var(--green)':'var(--red)')+'">'+(swDaily>=0?'+':'')+'$'+fm(swDaily,2)+'</b></div>'
+    +'<div style="font-size:12px;color:var(--tl)">Свопы за '+days+' дн: <b style="color:'+(swT>=0?'var(--green)':'var(--red)')+'">'+(swT>=0?'+':'')+'$'+fm(swT,0)+'</b> = <b style="color:var(--orange)">'+swPctCap.toFixed(1)+'% капитала</b></div>'
+    +'<div style="font-size:12px;color:var(--tl)">РЕПО/ночь: <b style="color:'+(repoN>0?'var(--red)':'var(--green)')+'">'+(repoN>0?fm(repoN,0)+'₽':'0₽')+'</b></div>'
+    +(repoT>0?'<div style="font-size:12px;color:var(--tl)">РЕПО за '+days+' дн: <b style="color:var(--red)">−'+fm(Math.round(repoT*rub))+'₽ ($'+fm(repoT,0)+')</b></div>':'')
+    +'</div>';
 
   // Rebalance
   const optFx=(totCap*mxRisk+se)/(1+mxRisk);
@@ -1321,6 +1535,243 @@ function calcTriple(){
   } else {
     $('trRebContent').innerHTML='<p style="color:var(--tm)">Ребаланс не требуется — буферы сбалансированы</p>';
   }
+
+  // 4 convergence scenarios
+  function trCard(title,emoji,fxPnl,mxPnl,desc){
+    const mxRub=mxPnl*rub;
+    const payR=mxPnl>0?mxRub*payoutPct:0;
+    const payU=payR/rub;
+    const nb=fxPnl+mxPnl+swT-repoT-cm;
+    const na=nb-payU;
+    const finalN=mxPnl>0?na:nb;
+    const roiP=finalN/totCap*100;
+    const annP=days>0?roiP/days*365:0;
+    const cF=fxPnl>=0?'var(--green)':'var(--red)';
+    const cM=mxPnl>=0?'var(--green)':'var(--red)';
+    const cN=finalN>=0?'var(--green)':'var(--red)';
+    const payTag=mxPnl>0
+      ?'<div style="font-size:11px;color:var(--orange);margin-top:4px">Пейаут: −'+fm(Math.round(payR))+'₽ ($'+fm(Math.round(payU))+')</div>'
+      :'<div style="font-size:11px;color:var(--green);margin-top:4px">Пейаут = 0</div>';
+    return '<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px">'
+      +'<div style="font-size:13px;font-weight:800;margin-bottom:6px">'+emoji+' '+title+'</div>'
+      +'<div style="font-size:10px;color:var(--tm);margin-bottom:6px">'+desc+'</div>'
+      +'<div style="font-size:12px;color:var(--tl)">Forex: <b style="color:'+cF+'">'+(fxPnl>=0?'+':'')+'$'+fm(Math.round(fxPnl))+'</b></div>'
+      +'<div style="font-size:12px;color:var(--tl)">МОЕХ: <b style="color:'+cM+'">'+(mxPnl>=0?'+':'')+fm(Math.round(mxRub))+'₽</b></div>'
+      +'<div style="border-top:1px solid var(--border);margin-top:5px;padding-top:5px">'
+      +'<div style="font-size:11px;color:var(--tl)">Свопы: <b style="color:'+(swT>=0?'var(--green)':'var(--red)')+'">'+(swT>=0?'+':'')+'$'+fm(Math.round(swT))+'</b></div>'
+      +'<div style="font-size:11px;color:var(--tl)">РЕПО: <b style="color:var(--red)">−$'+fm(Math.round(repoT))+'</b></div>'
+      +payTag
+      +'</div>'
+      +'<div style="border-top:1px solid var(--border);margin-top:5px;padding-top:5px">'
+      +'<div style="font-size:14px;font-weight:900;color:'+cN+'">'+(finalN>=0?'+':'')+'$'+fm(Math.round(finalN))+'</div>'
+      +'<div style="font-size:11px;color:var(--tm)">ROI: '+roiP.toFixed(1)+'% (~'+annP.toFixed(0)+'% год.)</div>'
+      +'</div></div>';
+  }
+  const moveUsd=0.8*fxB/fxLots/100000*notional; // 80% of FX buffer in USD
+  const s1=trCard('Лучший: всё на FX','🟢',gross,0,'FX заработал всё. МОЕХ = 0. Пейаут = 0.');
+  const s2=trCard('Средний: пополам','🟡',gross/2,gross/2,'Обе ноги заработали поровну.');
+  const s3=trCard('Плохой: всё на МОЕХ','🟠',0,gross,'МОЕХ заработал всё. Платим пейаут.');
+  const s4=trCard('Худший: просадка + пейаут','🔴',-moveUsd,gross+moveUsd,'FX просел на 80% буфера. МОЕХ = огромный гросс.');
+  $('trScenConv').innerHTML=s1+s2+s3+s4;
+}
+
+// === EU TRIPLE: Eu/CNY/EURCNH ===
+function adjTripleEuLots(dir){
+  const sl=$('teLots');
+  let v=+sl.value+dir*(+sl.step);
+  v=Math.max(+sl.min,Math.min(+sl.max,v));
+  sl.value=v;
+  calcTripleEu();
+}
+
+function calcTripleEu(){
+  const eu=+$('teEu').value, cr=+$('teCr').value, fx=+$('teFx').value, rub=+$('teRub').value;
+  const days=+$('teDays').value, iv=+$('teIV').value;
+  const fxCap=+$('teFxCap').value, mxOwn=+$('teMxOwn').value;
+  const fxLev=+$('teFxLev').value, propLev=+$('tePropLev').value;
+  const stopout=+$('teStopout').value/100, mxRisk=+$('teMxRisk').value/100;
+  const goEu=+$('teGoEu').value, goCr=+$('teGoCr').value;
+  const swapS=+$('teSwapS').value, swapL=+$('teSwapL').value;
+  const repoAnn=+$('teRepo').value/100, payoutPct=+$('tePayout').value/100;
+  const comm=+$('teComm').value;
+
+  // Synthetic vs Forex
+  const synthetic=eu/1000/cr;
+  const spreadNat=(synthetic-fx)/fx*100;
+  const expSp=$('teExpSpread').value.trim();
+  const spreadPct=expSp!==''?+expSp:spreadNat;
+  const isNegative=spreadPct<0;
+
+  $('teSpreadVal').textContent=(spreadPct>=0?'+':'')+spreadPct.toFixed(3)+'%';
+  $('teSpreadVal').style.color=isNegative?'var(--orange)':'var(--cyan)';
+  const dirTxt=isNegative?'Синтетика дешевле → Buy Eu + Short CNY + Short FX':
+    'Синтетика дороже → Short Eu + Buy CNY + Buy FX';
+  const natTxt='Факт: '+(spreadNat>=0?'+':'')+spreadNat.toFixed(3)+'%';
+  $('teSpreadSub').textContent=expSp!==''?dirTxt+' | '+natTxt:dirTxt;
+
+  // Adaptive slider
+  const pska=mxOwn*propLev;
+  const crPerEu=Math.round(fx);
+  const goPerEu=goEu+crPerEu*goCr;
+  const maxMx=Math.floor(pska/goPerEu);
+  const eurusd=eu/1000/rub;
+  const maxFx=Math.floor(fxCap*fxLev/(1000*eurusd));
+  let mx=Math.min(maxFx,maxMx);mx=Math.max(1,Math.min(5000,mx));
+  let step;
+  if(mx<=20)step=1;else if(mx<=100)step=5;else if(mx<=500)step=10;else if(mx<=2000)step=50;else step=100;
+  mx=Math.round(mx/step)*step;if(mx<step)mx=step;
+  const sl=$('teLots');
+  sl.min=step;sl.max=mx;sl.step=step;
+  let cur=+sl.value;cur=Math.round(cur/step)*step;
+  if(cur>mx)cur=mx;if(cur<+sl.min)cur=+sl.min;
+  sl.value=cur;
+  $('teSlMin').textContent=step;$('teSlMax').textContent=mx;
+
+  const euC=+sl.value;
+  const crC=Math.round(fx*euC);
+  const fxLots=euC/100;
+  const notionalRub=euC*eu;
+  const notional=notionalRub/rub;
+
+  $('teLotsDisp').textContent=fm(euC)+' Eu + '+fm(crC)+' CNY + '+fxLots.toFixed(2)+' FX';
+
+  // Margins
+  const fxMarg=notional/fxLev;
+  const mxGoTotal=euC*goEu+crC*goCr;
+
+  // FX buffer
+  const se=stopout*fxMarg;
+  const fxB=fxCap-se;
+  const fxPipValPerLot=10*cr/rub;
+  const fxPipVal=fxPipValPerLot*fxLots;
+  const fxBufPips=fxPipVal>0?Math.round(fxB/fxPipVal):0;
+  const fxBufPct=fxBufPips*0.0001/fx*100;
+
+  // MOEX buffer
+  const mxSensPerPct=notionalRub/100;
+  const mxBufRub=mxOwn*mxRisk;
+  const mxBufPct=mxSensPerPct>0?mxBufRub/mxSensPerPct:0;
+
+  const minPct=Math.min(fxBufPct,mxBufPct);
+  const sigP=iv/100*Math.sqrt(days/365);
+  const sig=sigP>0?minPct/100/sigP:0;
+
+  $('teBFx').textContent=fm(fxBufPips)+' п.';$('teBFxP').textContent=fxBufPct.toFixed(1)+'%';
+  $('teBMx').textContent=fm(Math.round(mxBufRub/1000))+'К₽';$('teBMxP').textContent=mxBufPct.toFixed(1)+'%';
+
+  // Sigma gauge
+  const sigPctG=Math.min(sig/3,1)*100;
+  const sc=sig>=2?'var(--green)':sig>=1?'var(--yellow)':sig>=.5?'var(--orange)':'var(--red)';
+  const sLbl=sig>=2?'КОМФОРТНО':sig>=1?'УМЕРЕННО':sig>=.5?'РИСКОВАННО':'ОПАСНО';
+  const bp=sig>=3?'<0.3':sig>=2?'<5':sig>=1?'~32':sig>=.5?'~62':'>68';
+  $('teGaugeF').style.width=sigPctG+'%';$('teGaugeF').style.background=sc;
+  $('teGVal').textContent=sig.toFixed(2)+'σ';$('teGVal').style.color=sc;
+  $('teGTxt').textContent=sLbl;$('teGTxt').style.color=sc;
+  $('teGSub').textContent='Шанс моржа: ~'+bp+'%';
+
+  // P&L
+  const gross=Math.abs(spreadPct)/100*notional;
+  const swapPips=isNegative?swapS:swapL;
+  const swT=swapPips*fxPipValPerLot*fxLots*days;
+  const bor=Math.max(0,mxGoTotal-mxOwn);
+  const repoT=bor*repoAnn/365*days/rub;
+  const cm=Math.max(1,Math.round(fxLots))*comm;
+  const totCap=fxCap+mxOwn/rub;
+
+  const netBest=gross+swT-repoT-cm;
+  const roiB=netBest/totCap*100;
+  const annB=days>0?roiB/days*365:0;
+  const payW=gross*payoutPct;
+  const netWorst=gross+swT-repoT-cm-payW;
+  const roiW=netWorst/totCap*100;
+
+  $('tePlGross').textContent='+$'+fm(gross,0);$('tePlGross').style.color='var(--green)';
+  $('tePlSwap').textContent=(swT>=0?'+':'')+' $'+fm(swT,0);$('tePlSwap').style.color=swT>=0?'var(--green)':'var(--red)';
+  $('tePlRepo').textContent='-$'+fm(repoT,0);
+  $('tePlComm').textContent='-$'+fm(cm,0);
+  $('tePlNet').textContent=(netBest>=0?'+':'')+' $'+fm(netBest,0);$('tePlNet').style.color=netBest>=0?'var(--green)':'var(--red)';
+  $('tePlGrossW').textContent='+$'+fm(gross,0);$('tePlGrossW').style.color='var(--green)';
+  $('tePlPayW').textContent='-$'+fm(payW,0);
+  $('tePlCostsW').textContent=(swT-repoT-cm>=0?'+':'')+' $'+fm(swT-repoT-cm,0);$('tePlCostsW').style.color=swT-repoT-cm>=0?'var(--green)':'var(--red)';
+  $('tePlNetW').textContent=(netWorst>=0?'+':'')+' $'+fm(netWorst,0);$('tePlNetW').style.color=netWorst>=0?'var(--green)':'var(--red)';
+  $('teRoiB').textContent=roiB.toFixed(1)+'%';
+  $('teAnnB').textContent='~'+annB.toFixed(0)+'%';
+  $('teCap').textContent='$'+fm(totCap,0);
+
+  // Capital usage + costs
+  const freeFx=fxCap-fxMarg;
+  const swDaily=swapPips*fxPipValPerLot*fxLots;
+  const repoN=bor*repoAnn/365;
+  const swPctCap=Math.abs(swT)/totCap*100;
+  $('teCapUsage').innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+    +'<div><div style="font-size:11px;color:var(--tl);margin-bottom:4px"><b style="color:var(--cyan)">FOREX</b></div>'
+    +'<div style="font-size:12px;color:var(--tl)">Маржа: <b style="color:var(--tw)">$'+fm(fxMarg,0)+'</b> ('+fxLots.toFixed(2)+' лотов)</div>'
+    +'<div style="font-size:12px;color:var(--tl)">Свободно: <b style="color:'+(freeFx>0?'var(--green)':'var(--red)')+'">$'+fm(freeFx,0)+'</b></div></div>'
+    +'<div><div style="font-size:11px;color:var(--tl);margin-bottom:4px"><b style="color:var(--yellow)">МОЕХ</b></div>'
+    +'<div style="font-size:12px;color:var(--tl)">ГО Eu: <b style="color:var(--tw)">'+fm(Math.round(euC*goEu/1000))+'К₽</b> ('+fm(euC)+' контр.)</div>'
+    +'<div style="font-size:12px;color:var(--tl)">ГО CNY: <b style="color:var(--tw)">'+fm(Math.round(crC*goCr/1000))+'К₽</b> ('+fm(crC)+' контр.)</div>'
+    +'<div style="font-size:12px;color:var(--tl)">ГО итого: <b style="color:var(--tw)">'+fm(Math.round(mxGoTotal/1000))+'К₽</b></div>'
+    +'<div style="font-size:12px;color:var(--tl)">Заём: <b style="color:'+(bor>0?'var(--orange)':'var(--green)')+'">'+( bor>0?fm(Math.round(bor/1000))+'К₽':'нет')+'</b></div></div></div>'
+    +'<div style="border-top:1px solid var(--border);margin-top:8px;padding-top:8px">'
+    +'<div style="font-size:11px;color:var(--tl);margin-bottom:4px"><b style="color:var(--red)">ИЗДЕРЖКИ</b></div>'
+    +'<div style="font-size:12px;color:var(--tl)">Своп/ночь: <b style="color:'+(swDaily>=0?'var(--green)':'var(--red)')+'">'+(swDaily>=0?'+':'')+'$'+fm(swDaily,2)+'</b></div>'
+    +'<div style="font-size:12px;color:var(--tl)">Свопы за '+days+' дн: <b style="color:'+(swT>=0?'var(--green)':'var(--red)')+'">'+(swT>=0?'+':'')+'$'+fm(swT,0)+'</b> = <b style="color:var(--orange)">'+swPctCap.toFixed(1)+'% капитала</b></div>'
+    +'<div style="font-size:12px;color:var(--tl)">РЕПО/ночь: <b style="color:'+(repoN>0?'var(--red)':'var(--green)')+'">'+(repoN>0?fm(repoN,0)+'₽':'0₽')+'</b></div>'
+    +(repoT>0?'<div style="font-size:12px;color:var(--tl)">РЕПО за '+days+' дн: <b style="color:var(--red)">−'+fm(Math.round(repoT*rub))+'₽ ($'+fm(repoT,0)+')</b></div>':'')
+    +'</div>';
+
+  // Rebalance
+  const optFx=(totCap*mxRisk+se)/(1+mxRisk);
+  const optMx=(totCap-optFx)*rub;
+  const diff=fxCap-optFx;
+  if(Math.abs(diff)>100){
+    const amt=Math.abs(diff);const amtRub=Math.round(amt*rub);
+    const nFx=Math.round(optFx),nMx=Math.round(optMx);
+    const nFxBuf=(nFx-se)/notional*100;
+    const nMxBuf=nMx*mxRisk/(notionalRub/100);
+    const nSig=sigP>0?Math.min(nFxBuf,nMxBuf)/100/sigP:0;
+    const nSc=nSig>=1?'var(--green)':nSig>=.5?'var(--yellow)':'var(--red)';
+    const transferTxt=diff>0
+      ?'Перевести <b style="color:var(--yellow)">$'+fm(Math.round(amt))+'</b> с Forex → ₽ на МОЕХ'
+      :'Вывести <b style="color:var(--yellow)">'+fm(amtRub)+'₽</b> с МОЕХ → $'+fm(Math.round(amt))+' на Forex';
+    $('teRebContent').innerHTML=`<p>${transferTxt}</p>
+      <p>Forex: $${fm(nFx)} | МОЕХ: ${fm(Math.round(nMx/1000))}К₽</p>
+      <p>Оба буфера: <b style="color:var(--green)">${Math.min(nFxBuf,nMxBuf).toFixed(1)}%</b> = <b style="color:${nSc}">${nSig.toFixed(2)}σ</b></p>`;
+  } else {
+    $('teRebContent').innerHTML='<p style="color:var(--tm)">Ребаланс не требуется</p>';
+  }
+
+  // 4 scenarios
+  function teCard(title,emoji,fxPnl,mxPnl,desc){
+    const mxRub=mxPnl*rub;
+    const payR=mxPnl>0?mxRub*payoutPct:0;const payU=payR/rub;
+    const nb=fxPnl+mxPnl+swT-repoT-cm;const na=nb-payU;
+    const finalN=mxPnl>0?na:nb;
+    const roiP=finalN/totCap*100;const annP=days>0?roiP/days*365:0;
+    const cF=fxPnl>=0?'var(--green)':'var(--red)';const cM=mxPnl>=0?'var(--green)':'var(--red)';const cN=finalN>=0?'var(--green)':'var(--red)';
+    const payTag=mxPnl>0
+      ?'<div style="font-size:11px;color:var(--orange);margin-top:4px">Пейаут: −'+fm(Math.round(payR))+'₽ ($'+fm(Math.round(payU))+')</div>'
+      :'<div style="font-size:11px;color:var(--green);margin-top:4px">Пейаут = 0</div>';
+    return '<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px">'
+      +'<div style="font-size:13px;font-weight:800;margin-bottom:6px">'+emoji+' '+title+'</div>'
+      +'<div style="font-size:10px;color:var(--tm);margin-bottom:6px">'+desc+'</div>'
+      +'<div style="font-size:12px;color:var(--tl)">Forex: <b style="color:'+cF+'">'+(fxPnl>=0?'+':'')+'$'+fm(Math.round(fxPnl))+'</b></div>'
+      +'<div style="font-size:12px;color:var(--tl)">МОЕХ: <b style="color:'+cM+'">'+(mxPnl>=0?'+':'')+fm(Math.round(mxRub))+'₽</b></div>'
+      +'<div style="border-top:1px solid var(--border);margin-top:5px;padding-top:5px">'
+      +'<div style="font-size:11px;color:var(--tl)">Свопы: <b style="color:'+(swT>=0?'var(--green)':'var(--red)')+'">'+(swT>=0?'+':'')+'$'+fm(Math.round(swT))+'</b></div>'
+      +'<div style="font-size:11px;color:var(--tl)">РЕПО: <b style="color:var(--red)">−$'+fm(Math.round(repoT))+'</b></div>'
+      +payTag+'</div>'
+      +'<div style="border-top:1px solid var(--border);margin-top:5px;padding-top:5px">'
+      +'<div style="font-size:14px;font-weight:900;color:'+cN+'">'+(finalN>=0?'+':'')+'$'+fm(Math.round(finalN))+'</div>'
+      +'<div style="font-size:11px;color:var(--tm)">ROI: '+roiP.toFixed(1)+'% (~'+annP.toFixed(0)+'% год.)</div>'
+      +'</div></div>';
+  }
+  const moveUsd=fxLots>0?0.8*fxB/fxLots/100000*notional:0;
+  $('teScenConv').innerHTML=
+    teCard('Лучший: всё на FX','🟢',gross,0,'FX заработал всё. Пейаут = 0.')
+    +teCard('Средний: пополам','🟡',gross/2,gross/2,'Обе ноги заработали поровну.')
+    +teCard('Плохой: всё на МОЕХ','🟠',0,gross,'МОЕХ заработал всё. Платим пейаут.')
+    +teCard('Худший: просадка + пейаут','🔴',-moveUsd,gross+moveUsd,'FX просел на 80% буфера.');
 }
 
 document.querySelectorAll('input,select').forEach(el=>{
@@ -1328,6 +1779,7 @@ document.querySelectorAll('input,select').forEach(el=>{
   const h=()=>{
     if(mode==='OVW')calcOvw();
     else if(mode==='TRIPLE')calcTriple();
+    else if(mode==='TRIPLE_EU')calcTripleEu();
     else{autoLotMode=true;calc();}
   };
   el.addEventListener('input',h);el.addEventListener('change',h);
@@ -1356,8 +1808,8 @@ $('inDays').value=daysToExp(MODES[mode].exp);
 try{const k=localStorage.getItem('td_key');if(k)$('inApiKey').value=k;}catch(e){}
 
 function setFetchUI(msg,color,disabled){
-  ['btnFetch','btnFetchOvw','btnFetchTriple'].forEach(id=>{const b=$(id);if(b){b.disabled=disabled;b.style.opacity=disabled?'.5':'1';}});
-  ['fetchStatus','fetchStatusOvw','fetchStatusTriple'].forEach(id=>{const s=$(id);if(s){s.textContent=msg;s.style.color=color;}});
+  ['btnFetch','btnFetchOvw','btnFetchTriple','btnFetchTripleEu'].forEach(id=>{const b=$(id);if(b){b.disabled=disabled;b.style.opacity=disabled?'.5':'1';}});
+  ['fetchStatus','fetchStatusOvw','fetchStatusTriple','fetchStatusTripleEu'].forEach(id=>{const s=$(id);if(s){s.textContent=msg;s.style.color=color;}});
 }
 
 async function fetchPrices(){
@@ -1366,7 +1818,7 @@ async function fetchPrices(){
 
   // MOEX ISS (free, no key)
   try{
-    const tickers=Object.values(MODES).map(m=>m.moexTicker).join(',')+',SiM6,CRM6';
+    const tickers=Object.values(MODES).map(m=>m.moexTicker).join(',')+',SiM6,CRM6,EuM6';
     const r=await fetch('https://iss.moex.com/iss/engines/futures/markets/forts/securities.json?iss.meta=off&iss.only=marketdata,securities&securities='+tickers);
     const d=await r.json();
     const mc=d.marketdata.columns,mr=d.marketdata.data;
@@ -1394,7 +1846,7 @@ async function fetchPrices(){
       if(m.stepPrice)v.stepPr=m.stepPrice;
     }
     // Update current tab UI
-    if(mode!=='OVW'&&mode!=='TRIPLE'){
+    if(mode!=='OVW'&&mode!=='TRIPLE'&&mode!=='TRIPLE_EU'){
       const p=MODES[mode];
       const m=mx[p.moexTicker];
       if(m){
@@ -1409,8 +1861,12 @@ async function fetchPrices(){
       if(mx['SiM6'].go)$('trGoSi').value=Math.round(mx['SiM6'].go);
     }
     if(mx['CRM6']){
-      $('trCr').value=mx['CRM6'].price;
-      if(mx['CRM6'].go)$('trGoCr').value=Math.round(mx['CRM6'].go);
+      $('trCr').value=mx['CRM6'].price;$('teCr').value=mx['CRM6'].price;
+      if(mx['CRM6'].go){$('trGoCr').value=Math.round(mx['CRM6'].go);$('teGoCr').value=Math.round(mx['CRM6'].go);}
+    }
+    if(mx['EuM6']){
+      $('teEu').value=mx['EuM6'].price;
+      if(mx['EuM6'].go)$('teGoEu').value=Math.round(mx['EuM6'].go);
     }
     mxOk=Object.keys(mx).length;
     // Build details
@@ -1420,6 +1876,7 @@ async function fetchPrices(){
     }
     if(mx['SiM6'])details.push('SiM6:'+mx['SiM6'].price);
     if(mx['CRM6'])details.push('CRM6:'+mx['CRM6'].price);
+    if(mx['EuM6'])details.push('EuM6:'+mx['EuM6'].price);
     setFetchUI('✅ МОЕХ ('+mxOk+'). Forex...','var(--green)',true);
   }catch(e){setFetchUI('❌ МОЕХ: '+e.message,'var(--red)',true);}
 
@@ -1435,13 +1892,19 @@ async function fetchPrices(){
         if(val&&val.price){
           const pr=parseFloat(val.price);
           for(const v of Object.values(MODES)){if(v.fxSymbol===sym)v.spot=pr;}
-          if(mode!=='OVW'&&mode!=='TRIPLE'&&MODES[mode].fxSymbol===sym)$('inSpot').value=pr;
+          if(mode!=='OVW'&&mode!=='TRIPLE'&&mode!=='TRIPLE_EU'&&MODES[mode].fxSymbol===sym)$('inSpot').value=pr;
           if(sym==='USD/CNH')$('trFx').value=pr;
           fxOk++;
         }
         if(val&&val.code)details.push(sym+':⚠'+val.message?.slice(0,20));
       }
     }catch(e){setFetchUI((mxOk?'✅ МОЕХ. ':'')+'❌ FX: '+e.message,'var(--orange)',true);}
+  }
+
+  // Calculate EUR/CNH = EUR/USD × USD/CNH (not available directly on TwelveData)
+  if(MODES.EURUSD.spot&&MODES.UCNY.spot){
+    const eurcnh=MODES.EURUSD.spot*MODES.UCNY.spot;
+    $('teFx').value=eurcnh.toFixed(4);
   }
 
   const t=new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
@@ -1455,9 +1918,11 @@ async function fetchPrices(){
   $('ovwUsd').value=Math.round(+$('ovwRub').value/rub);
   $('ovwRate').textContent=rub.toFixed(2);
   $('trRub').value=rub.toFixed(2);
+  $('teRub').value=rub.toFixed(2);
   // Recalc active tab
   if(mode==='OVW')calcOvw();
   else if(mode==='TRIPLE')calcTriple();
+  else if(mode==='TRIPLE_EU')calcTripleEu();
   else calc();
 }
 
