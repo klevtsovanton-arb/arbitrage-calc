@@ -92,6 +92,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     <div class="hdr-right">
       <h1 id="hdrTitle">Калькулятор арбитража EUR/USD</h1>
       <p id="hdrSub">SHORT Forex × LONG MOEX | Эксп. 18.06.2026</p>
+      <p style="font-size:10px;color:var(--tm);margin-top:2px;font-weight:700">v0.0.1.b</p>
     </div>
   </div>
 
@@ -384,7 +385,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
         <div class="sep"></div>
         <div class="card-t" style="color:var(--red)">💸 Издержки</div>
         <div class="row"><label>Своп (пипс/ночь)</label><input id="inSwap" oninput="calc()" onchange="calc()" type="number" step="0.001" value="0.104"><div class="unit">пипс</div></div>
-        <div class="hint">+ = вам платят, − = вы платите</div>
+        <div class="hint">+ = вам платят, − = вы платите. <span id="swapLive" style="color:var(--yellow);font-weight:700"></span></div>
         <div class="row"><label>Спред FX (bid/ask)</label><input id="inFxSpread" oninput="calc()" onchange="calc()" type="number" step="0.1" value="0"><div class="unit">$/oz</div></div>
         <div class="hint">Разница bid−ask у брокера. Для EUR/USD и Gold ~0, для Platinum ~7$</div>
         <div class="row"><label>Ставка РЕПО (год.)</label><input id="inRepo" oninput="calc()" onchange="calc()" type="number" step="0.5" value="21"><div class="unit">%</div></div>
@@ -499,7 +500,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   </div>
 
   </div><!-- /mainContent -->
-  <div class="footer">Грамотный Трейдинг | Апрель 2026 | Все расчёты — оценка при текущих параметрах</div>
+  <div class="footer">Грамотный Трейдинг v0.0.1.b | Апрель 2026 | Все расчёты — оценка при текущих параметрах</div>
 </div>
 
 <script>
@@ -513,7 +514,7 @@ const MODES={
     lotStep:.5,lotMin:.5,lotMax:5,swap:.104,repo:21,iv:7.51,exp:'2026-06-18',spot:1.17304,fut:1.16741,fxSpread:0,
     moexTicker:'EDM6',fxSymbol:'EUR/USD'},
   UCNY:{label:'USD/CNH',pipSz:.0001,pipVal:10,stepSz:.001,stepPr:11.24,lpc:100,go:7738,comm:5,cSize:100000,fxLev:100,dir:'back',pipValForeign:true,
-    lotStep:.5,lotMin:.5,lotMax:5,swap:-.689,repo:21,iv:5,exp:'2026-06-18',spot:6.8305,fut:6.818,fxSpread:0,
+    lotStep:.5,lotMin:.5,lotMax:5,swap:-7.27,repo:21,iv:5,exp:'2026-06-18',spot:6.8305,fut:6.818,fxSpread:0,
     moexTicker:'UCM6',fxSymbol:'USD/CNH'},
   GOLD:{label:'Gold',pipSz:.01,pipVal:1,stepSz:.1,stepPr:7.70,lpc:100,go:50000,comm:5,cSize:100,fxLev:100,dir:'cont',
     lotStep:.1,lotMin:.1,lotMax:2,swap:-6.841,repo:21,iv:15,exp:'2026-06-19',spot:4748.47,fut:4793.70,fxSpread:0,
@@ -838,6 +839,10 @@ function calc(){
   // Capital usage block
   const swDaily=swapPips*pipVal*lots;
   const swPctCap=(Math.abs(swT)/totCap*100);
+  // Live swap readout under input
+  const swLiveSign=swDaily>=0?'+':'−';
+  const swLiveColor=swDaily>=0?'var(--green)':'var(--red)';
+  $('swapLive').innerHTML=`→ <span style="color:${swLiveColor}">${swLiveSign}$${fm(Math.abs(swDaily),2)}/сутки</span> на ${lots} лот${lots===1?'':'а'} (сверь с терминалом)`;
   const margPct=(marg/fxCap*100);
   const goPct=(goT/pska*100);
   const goOwnPct=(goT/mxOwn*100);
