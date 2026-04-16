@@ -1819,7 +1819,7 @@ async function fetchPrices(){
   // MOEX ISS (free, no key)
   try{
     const tickers=Object.values(MODES).map(m=>m.moexTicker).join(',')+',SiM6,CRM6,EuM6';
-    const r=await fetch('https://iss.moex.com/iss/engines/futures/markets/forts/securities.json?iss.meta=off&iss.only=marketdata,securities&securities='+tickers);
+    const r=await fetch('https://arb-moex-proxy.klevtsov-anton.workers.dev/?t='+tickers);
     const d=await r.json();
     const mc=d.marketdata.columns,mr=d.marketdata.data;
     const sc=d.securities.columns,sr=d.securities.data;
